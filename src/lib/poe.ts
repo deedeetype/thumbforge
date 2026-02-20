@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import { AspectRatio } from '@/types';
 
 export async function generateThumbnailWithPoe(
@@ -12,52 +11,44 @@ export async function generateThumbnailWithPoe(
     throw new Error('POE_API_KEY is not configured');
   }
 
-  const client = new OpenAI({
-    apiKey: apiKey,
-    baseURL: 'https://api.poe.com/v1',
-  });
-
-  // Poe expects aspect ratio as "16:9" or "9:16", not pixel dimensions
   const aspectValue = aspectRatio === 'landscape' ? '16:9' : '9:16';
 
   try {
-    const messages: OpenAI.ChatCompletionMessageParam[] = [];
+    // Build message content
+    let messageContent: string | Array<Record<string, unknown>>;
 
     if (avatarDataUrl) {
-      messages.push({
-        role: 'user',
-        content: [
-          {
-            type: 'image_url',
-            image_url: { url: avatarDataUrl },
-          },
-          {
-            type: 'text',
-            text: prompt,
-          },
-        ],
-      });
+      messageContent = [
+        { type: 'image_url', image_url: { url: avatarDataUrl } },
+        { type: 'text', text: prompt },
+      ];
     } else {
-      messages.push({
-        role: 'user',
-        content: prompt,
-      });
+      messageContent = prompt;
     }
 
-    const response = await client.chat.completions.create(
-      {
-        model: 'Grok-Imagine-Image',
-        messages,
-        stream: false,
+    // Use raw fetch to properly pass both standard and custom Poe params
+    const response = await fetch('https://api.poe.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       },
-      {
-        body: {
-          aspect: aspectValue,
-        },
-      }
-    );
+      body: JSON.stringify({
+        model: 'Grok-Imagine-Image',
+        messages: [{ role: 'user', content: messageContent }],
+        stream: false,
+        aspect: aspectValue,
+      }),
+    });
 
-    const content = response.choices[0]?.message?.content;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Poe API error:', JSON.stringify(errorData));
+      throw new Error(`Poe API error: ${response.status} - ${JSON.stringify(errorData)}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
       throw new Error('No content in API response');
@@ -89,6 +80,9 @@ export async function generateThumbnailWithPoe(
     return content;
   } catch (error) {
     console.error('Error generating thumbnail with Poe:', error);
+    if (error instanceof Error && error.message.startsWith('Poe API error:')) {
+      throw error;
+    }
     throw new Error('Failed to generate thumbnail. Please try again.');
   }
 }
