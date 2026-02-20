@@ -11,8 +11,7 @@ export async function generateThumbnailWithPoe(
     throw new Error('POE_API_KEY is not configured');
   }
 
-  // GPT-Image-1.5 uses OpenAI-style size param: "WxH"
-  const sizeValue = aspectRatio === 'landscape' ? '1536x1024' : '1024x1536';
+  const aspectValue = aspectRatio === 'landscape' ? '16:9' : '9:16';
 
   // Build message content
   let messageContent: string | Array<Record<string, unknown>>;
@@ -40,10 +39,10 @@ export async function generateThumbnailWithPoe(
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'GPT-Image-1.5',
+        model: 'Grok-Imagine-Image',
         messages: [{ role: 'user', content: messageContent }],
         stream: false,
-        size: sizeValue,
+        aspect: aspectValue,
       }),
     });
 
@@ -60,25 +59,18 @@ export async function generateThumbnailWithPoe(
       throw new Error('No content in API response');
     }
 
-    // Extract image URL
     if (content.startsWith('http://') || content.startsWith('https://')) {
       return content.trim();
     }
 
     const markdownImageMatch = content.match(/!\[.*?\]\((https?:\/\/[^\)]+)\)/);
-    if (markdownImageMatch) {
-      return markdownImageMatch[1];
-    }
+    if (markdownImageMatch) return markdownImageMatch[1];
 
     const urlMatch = content.match(/(https?:\/\/[^\s\)\"\']+\.(png|jpg|jpeg|webp|gif)[^\s\)\"\']*)/i);
-    if (urlMatch) {
-      return urlMatch[1];
-    }
+    if (urlMatch) return urlMatch[1];
 
     const anyUrlMatch = content.match(/(https?:\/\/[^\s\)\"\']+)/);
-    if (anyUrlMatch) {
-      return anyUrlMatch[1];
-    }
+    if (anyUrlMatch) return anyUrlMatch[1];
 
     return content;
   } catch (error) {

@@ -50,53 +50,62 @@ export function buildPrompt(
   hasAvatarImage: boolean = false
 ): string {
   const isLandscape = designOptions.aspectRatio === 'landscape';
-  const dimensions = isLandscape ? '1536x1024' : '1024x1536';
-  const ratio = isLandscape ? '3:2 landscape' : '2:3 portrait';
-  const formatLabel = isLandscape ? 'long-form' : 'YouTube Short';
+  const formatLabel = isLandscape ? 'long-form landscape 16:9' : 'YouTube Short portrait 9:16';
 
   const moodConfig = moodConfigs.find((m) => m.id === designOptions.mood);
   const headline = designOptions.headlineText || videoMetadata.title;
 
-  const prompt = `Generate a YouTube thumbnail image.
+  // Build prompt as array of non-empty parts to avoid blank sections
+  const parts: string[] = [];
 
-${template.promptStyle}
+  parts.push(`Generate a ${formatLabel} YouTube thumbnail image.`);
+  parts.push(template.promptStyle);
+  parts.push(`VIDEO TOPIC: "${videoMetadata.title}"${videoMetadata.author_name ? ` by ${videoMetadata.author_name}` : ''}`);
+  parts.push('Design the thumbnail to visually represent this video topic using relevant real objects, brand logos, icons, and imagery.');
 
-VIDEO TOPIC: "${videoMetadata.title}"${videoMetadata.author_name ? ` by ${videoMetadata.author_name}` : ''}
-Design the entire thumbnail to visually represent this video topic. Use relevant real objects, real brand logos, real icons, and real-world imagery that match the subject matter.
+  // Mood
+  if (moodConfig && moodConfig.id !== 'none') {
+    parts.push(`MOOD: ${moodConfig.emoji} ${moodConfig.label.toUpperCase()} — Dominant accent: ${moodConfig.colorName} (${moodConfig.color}) on dark background. Use diagonal ${moodConfig.colorName} stripe in top-right, ${moodConfig.colorName} glow on subject, small ${moodConfig.colorName} dot in corner. All graphic elements in ${moodConfig.colorName} only.`);
+  }
 
-${moodConfig && moodConfig.id !== 'none' ? `MOOD: ${moodConfig.emoji} ${moodConfig.label.toUpperCase()}
-Dominant accent: ${moodConfig.colorName} (${moodConfig.color}) on dark background.
-• Diagonal ${moodConfig.colorName} accent stripe in top-right corner
-• ${moodConfig.colorName} glow/rim light on main subject
-• Small ${moodConfig.colorName} dot in one corner
-• All arrows/shapes/icons in ${moodConfig.colorName} only
-` : ''}${designOptions.showVideoTitle ? `TEXT ON THE THUMBNAIL:
-Write exactly these words on the image in large bold text: "${headline}"
-The text must be:
-• LARGE, BOLD, UPPERCASE, sans-serif font (Impact/Anton style)
-• Color: ${designOptions.fontColor === '#FFFFFF' ? 'pure white' : designOptions.fontColor}
-• Thick black outline and hard drop shadow
-• Positioned at the ${designOptions.textPosition === 'top' ? 'TOP' : designOptions.textPosition === 'center' ? 'CENTER' : 'BOTTOM'} of the image
-• Max 40% of canvas area
-• Must be perfectly legible even at small sizes
-` : 'NO TEXT on the thumbnail. Visual only.\n'}${designOptions.showChannelTitle && videoMetadata.author_name ? `Also include "${videoMetadata.author_name}" in smaller text.\n` : ''}${designOptions.includeAvatar ? `PERSON IN THUMBNAIL:
-${hasAvatarImage ? `CRITICAL: I am attaching my photo as reference. You MUST reproduce MY EXACT face, skin tone, hair, and features in the generated thumbnail. Make me recognizable — this should look like ME, not a generic person.
-${designOptions.avatarDescription ? `Additional details: ${designOptions.avatarDescription}` : ''}` : `${designOptions.avatarDescription ? `Person: ${designOptions.avatarDescription}` : 'A confident content creator.'}`}
-EXPRESSION: ${moodConfig?.expression || 'engaging, expressive'}
-Make the expression DRAMATIC and EXAGGERATED — wide eyes, open mouth, big gestures. This is a YouTube thumbnail, not a portrait photo.
-Position: ${isLandscape ? `${designOptions.avatarPosition.toUpperCase()} side of frame` : 'upper half of frame'}
-• ${moodConfig?.colorName || 'accent'}-colored glow border around the person
-• Front-lit, high contrast against dark background
-• Chest/waist up, dynamic pose, leaning in or gesturing
-${hasAvatarImage ? '• Use my attached photo for face/likeness ONLY — generate a completely new composition with the expression and style described above.' : ''}` : `NO person. Fill the space with:
-• Real objects, product images, brand logos relevant to the video topic
-• Bold geometric shapes, light streaks, or bokeh in accent color
-• Dynamic, eye-catching composition`}
+  // Typography — only add if at least one text option is on
+  if (designOptions.showVideoTitle) {
+    const textPos = designOptions.textPosition === 'top' ? 'TOP' : designOptions.textPosition === 'center' ? 'CENTER' : 'BOTTOM';
+    const textColor = designOptions.fontColor === '#FFFFFF' ? 'pure white' : designOptions.fontColor;
+    parts.push(`TEXT: Write exactly "${headline}" in LARGE BOLD UPPERCASE sans-serif (Impact style), ${textColor} with thick black outline and drop shadow, positioned at the ${textPos} of the image. Max 40% of canvas. Must be legible at small sizes.`);
+  } else {
+    parts.push('NO TEXT on the thumbnail. Pure visual only.');
+  }
 
-BACKGROUND: ${designOptions.backgroundColor === '#000000' ? 'dark black/charcoal' : designOptions.backgroundColor}
-${designOptions.overlayOpacity > 0 ? `Dark overlay at ~${designOptions.overlayOpacity}% opacity for text readability.` : ''}
+  if (designOptions.showChannelTitle && videoMetadata.author_name) {
+    parts.push(`Also show "${videoMetadata.author_name}" in smaller subtle text.`);
+  }
 
-This must look like a PROFESSIONAL, click-worthy YouTube thumbnail. Bold, dramatic, high-contrast. Eye-catching even at small sizes.`;
+  // Subject
+  if (designOptions.includeAvatar) {
+    const position = isLandscape ? `${designOptions.avatarPosition.toUpperCase()} side of frame` : 'upper half of frame';
+    const expression = moodConfig?.expression || 'engaging, expressive';
+    const accentColor = moodConfig?.colorName || 'accent';
 
-  return prompt;
+    if (hasAvatarImage) {
+      parts.push(`PERSON: Use the attached photo as reference — reproduce MY EXACT face, skin tone, hair, and features. Make me recognizable.${designOptions.avatarDescription ? ` Additional: ${designOptions.avatarDescription}.` : ''} EXPRESSION: ${expression} — DRAMATIC and EXAGGERATED. Position: ${position}. ${accentColor} glow border, front-lit, high contrast, chest/waist up, dynamic pose. Generate a NEW composition using my likeness with the described expression and style.`);
+    } else {
+      const personDesc = designOptions.avatarDescription || 'A confident content creator';
+      parts.push(`PERSON: ${personDesc}. EXPRESSION: ${expression} — DRAMATIC and EXAGGERATED. Position: ${position}. ${accentColor} glow border, front-lit, high contrast, chest/waist up, dynamic pose.`);
+    }
+  } else {
+    parts.push('NO person. Use bold visual elements: real objects, product images, brand logos relevant to the topic, geometric shapes, light streaks, bokeh in accent color.');
+  }
+
+  // Background
+  const bgColor = designOptions.backgroundColor === '#000000' ? 'dark black/charcoal' : designOptions.backgroundColor;
+  let bgText = `BACKGROUND: ${bgColor}.`;
+  if (designOptions.overlayOpacity > 0) {
+    bgText += ` Dark overlay at ~${designOptions.overlayOpacity}% opacity for text readability.`;
+  }
+  parts.push(bgText);
+
+  parts.push('Professional, click-worthy YouTube thumbnail. Bold, dramatic, high-contrast, eye-catching at small sizes.');
+
+  return parts.join('\n\n');
 }
