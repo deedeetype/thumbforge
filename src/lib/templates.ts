@@ -1,4 +1,4 @@
-import { Template } from '@/types';
+import { Template, DesignOptions } from '@/types';
 
 export const templates: Template[] = [
   {
@@ -43,19 +43,80 @@ export function getTemplate(id: string): Template | undefined {
   return templates.find((t) => t.id === id);
 }
 
-export function buildPrompt(template: Template, videoMetadata: VideoMetadata): string {
-  const { title, author_name } = videoMetadata;
-  
-  return `${template.promptStyle}
-
-Video context:
-Title: "${title}"
-${author_name ? `Creator: ${author_name}` : ''}
-
-Create a professional YouTube thumbnail (1280x720, 16:9 aspect ratio) that captures the essence of this video. The thumbnail should be clear, readable, and optimized for both desktop and mobile viewing. Include relevant text overlays that complement the video title.`;
-}
-
 interface VideoMetadata {
   title: string;
   author_name?: string;
+}
+
+export function buildPrompt(
+  template: Template,
+  videoMetadata: VideoMetadata,
+  designOptions: DesignOptions,
+  hasAvatar: boolean
+): string {
+  const parts: string[] = [];
+
+  parts.push(template.promptStyle);
+
+  // Design directives
+  const designDirectives: string[] = [];
+
+  if (designOptions.fontColor && designOptions.fontColor !== '#FFFFFF') {
+    designDirectives.push(`Use ${designOptions.fontColor} as the primary text/font color.`);
+  }
+
+  if (designOptions.backgroundColor && designOptions.backgroundColor !== '#000000') {
+    designDirectives.push(`Use ${designOptions.backgroundColor} as the dominant background color.`);
+  } else {
+    designDirectives.push('Use a dark background.');
+  }
+
+  if (designOptions.overlayOpacity > 0) {
+    designDirectives.push(`Apply a semi-transparent overlay at about ${designOptions.overlayOpacity}% opacity for text readability.`);
+  }
+
+  if (designOptions.textPosition === 'top') {
+    designDirectives.push('Position the main text/title at the top of the image.');
+  } else if (designOptions.textPosition === 'center') {
+    designDirectives.push('Position the main text/title in the center of the image.');
+  } else {
+    designDirectives.push('Position the main text/title at the bottom of the image.');
+  }
+
+  // Title and channel display
+  if (designOptions.showVideoTitle) {
+    designDirectives.push(`Include the video title text "${videoMetadata.title}" prominently in the thumbnail.`);
+  } else {
+    designDirectives.push('Do NOT include any title text in the thumbnail. Focus on visuals only.');
+  }
+
+  if (designOptions.showChannelTitle && videoMetadata.author_name) {
+    designDirectives.push(`Include the channel name "${videoMetadata.author_name}" in a smaller, subtle text.`);
+  } else {
+    designDirectives.push('Do NOT include any channel name text.');
+  }
+
+  // Avatar
+  if (designOptions.includeAvatar && hasAvatar) {
+    designDirectives.push(
+      `Include a person/avatar on the ${designOptions.avatarPosition} side of the thumbnail. The avatar should be prominently featured and integrated naturally into the composition.`
+    );
+  } else if (!designOptions.includeAvatar) {
+    designDirectives.push('Do NOT include any person or avatar in the thumbnail.');
+  }
+
+  if (designDirectives.length > 0) {
+    parts.push('\nDesign directives:\n' + designDirectives.join('\n'));
+  }
+
+  parts.push(`\nVideo context:\nTitle: "${videoMetadata.title}"`);
+  if (videoMetadata.author_name) {
+    parts.push(`Creator: ${videoMetadata.author_name}`);
+  }
+
+  parts.push(
+    '\nCreate a professional YouTube thumbnail (1280x720, 16:9 aspect ratio) that captures the essence of this video. The thumbnail should be clear, readable, and optimized for both desktop and mobile viewing.'
+  );
+
+  return parts.join('\n');
 }

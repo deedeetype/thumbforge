@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { GeneratedThumbnail, VideoMetadata } from '@/types';
+import { GeneratedThumbnail, VideoMetadata, DesignOptions, defaultDesignOptions } from '@/types';
 import { isValidYouTubeUrl } from '@/lib/youtube';
 import { templates } from '@/lib/templates';
 import Input from './ui/Input';
@@ -11,6 +11,8 @@ import Spinner from './ui/Spinner';
 import TemplateSelector from './TemplateSelector';
 import VideoPreview from './VideoPreview';
 import ThumbnailGallery from './ThumbnailGallery';
+import AvatarUpload from './AvatarUpload';
+import DesignOptionsPanel from './DesignOptions';
 
 export default function ThumbnailGenerator() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -21,6 +23,8 @@ export default function ThumbnailGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
+  const [designOptions, setDesignOptions] = useState<DesignOptions>(defaultDesignOptions);
 
   const validateUrl = (url: string) => {
     if (!url) {
@@ -35,21 +39,19 @@ export default function ThumbnailGenerator() {
     return true;
   };
 
-  const handleGenerateThumbnail = async () => {
-    if (!validateUrl(youtubeUrl)) return;
-
+  const doGenerate = async (templateId: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await fetch('/api/generate-thumbnail', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           youtubeUrl,
-          templateId: selectedTemplateId,
+          templateId,
+          designOptions,
+          avatarDataUrl: designOptions.includeAvatar ? avatarDataUrl : undefined,
         }),
       });
 
@@ -59,12 +61,11 @@ export default function ThumbnailGenerator() {
         throw new Error(data.error || 'Failed to generate thumbnail');
       }
 
-      // Create new thumbnail object
       const newThumbnail: GeneratedThumbnail = {
         id: Date.now().toString(),
         imageUrl: data.imageUrl,
-        templateId: selectedTemplateId,
-        templateName: templates.find((t) => t.id === selectedTemplateId)?.name || 'Unknown',
+        templateId,
+        templateName: templates.find((t) => t.id === templateId)?.name || 'Unknown',
         timestamp: Date.now(),
         videoTitle: videoMetadata?.title,
       };
@@ -76,51 +77,16 @@ export default function ThumbnailGenerator() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGenerateThumbnail = async () => {
+    if (!validateUrl(youtubeUrl)) return;
+    await doGenerate(selectedTemplateId);
   };
 
   const handleRegenerate = async (thumbnail: GeneratedThumbnail) => {
     setSelectedTemplateId(thumbnail.templateId);
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/generate-thumbnail', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          youtubeUrl,
-          templateId: thumbnail.templateId,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to generate thumbnail');
-      }
-
-      const newThumbnail: GeneratedThumbnail = {
-        id: Date.now().toString(),
-        imageUrl: data.imageUrl,
-        templateId: thumbnail.templateId,
-        templateName: thumbnail.templateName,
-        timestamp: Date.now(),
-        videoTitle: videoMetadata?.title,
-      };
-
-      setCurrentThumbnail(data.imageUrl);
-      setThumbnails((prev) => [newThumbnail, ...prev]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUrlBlur = () => {
-    validateUrl(youtubeUrl);
+    await doGenerate(thumbnail.templateId);
   };
 
   return (
@@ -134,7 +100,7 @@ export default function ThumbnailGenerator() {
             placeholder="https://youtube.com/watch?v=..."
             value={youtubeUrl}
             onChange={(e) => setYoutubeUrl(e.target.value)}
-            onBlur={handleUrlBlur}
+            onBlur={() => validateUrl(youtubeUrl)}
             error={urlError || undefined}
             disabled={isLoading}
           />
@@ -143,6 +109,20 @@ export default function ThumbnailGenerator() {
         <TemplateSelector
           selectedTemplateId={selectedTemplateId}
           onSelectTemplate={setSelectedTemplateId}
+          disabled={isLoading}
+        />
+
+        <Card>
+          <AvatarUpload
+            avatarDataUrl={avatarDataUrl}
+            onAvatarChange={setAvatarDataUrl}
+            disabled={isLoading}
+          />
+        </Card>
+
+        <DesignOptionsPanel
+          options={designOptions}
+          onChange={setDesignOptions}
           disabled={isLoading}
         />
 
@@ -174,11 +154,11 @@ export default function ThumbnailGenerator() {
       <div className="lg:col-span-2 space-y-6">
         <VideoPreview metadata={videoMetadata} />
 
-        {/* Current Thumbnail Preview */}
         {currentThumbnail && (
           <Card>
             <h2 className="text-xl font-semibold text-white mb-4">Latest Thumbnail</h2>
             <div className="relative w-full aspect-video bg-gray-900 rounded overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={currentThumbnail}
                 alt="Generated thumbnail"
@@ -188,7 +168,6 @@ export default function ThumbnailGenerator() {
           </Card>
         )}
 
-        {/* Gallery */}
         <ThumbnailGallery thumbnails={thumbnails} onRegenerate={handleRegenerate} />
       </div>
     </div>

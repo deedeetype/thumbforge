@@ -2,7 +2,6 @@
 
 import { VideoMetadata } from '@/types';
 import Card from './ui/Card';
-import Image from 'next/image';
 
 interface VideoPreviewProps {
   metadata: VideoMetadata | null;
@@ -19,7 +18,8 @@ export default function VideoPreview({ metadata }: VideoPreviewProps) {
       <div className="flex gap-4">
         {metadata.thumbnail_url && (
           <div className="flex-shrink-0">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={metadata.thumbnail_url}
               alt="Video thumbnail"
               width={160}

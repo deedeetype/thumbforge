@@ -13,6 +13,28 @@ export interface VideoMetadata {
   html?: string;
 }
 
+export interface DesignOptions {
+  fontColor: string;
+  backgroundColor: string;
+  showChannelTitle: boolean;
+  showVideoTitle: boolean;
+  includeAvatar: boolean;
+  avatarPosition: 'left' | 'right' | 'center';
+  textPosition: 'top' | 'bottom' | 'center';
+  overlayOpacity: number; // 0-100
+}
+
+export const defaultDesignOptions: DesignOptions = {
+  fontColor: '#FFFFFF',
+  backgroundColor: '#000000',
+  showChannelTitle: true,
+  showVideoTitle: true,
+  includeAvatar: false,
+  avatarPosition: 'right',
+  textPosition: 'bottom',
+  overlayOpacity: 50,
+};
+
 export interface GeneratedThumbnail {
   id: string;
   imageUrl: string;
@@ -25,6 +47,8 @@ export interface GeneratedThumbnail {
 export interface GenerateThumbnailRequest {
   youtubeUrl: string;
   templateId: string;
+  designOptions: DesignOptions;
+  avatarDataUrl?: string; // base64 data URL of uploaded avatar
 }
 
 export interface GenerateThumbnailResponse {

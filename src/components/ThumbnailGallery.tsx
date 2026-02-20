@@ -3,7 +3,6 @@
 import { GeneratedThumbnail } from '@/types';
 import Card from './ui/Card';
 import Button from './ui/Button';
-import Image from 'next/image';
 
 interface ThumbnailGalleryProps {
   thumbnails: GeneratedThumbnail[];
@@ -29,22 +28,24 @@ export default function ThumbnailGallery({ thumbnails, onRegenerate }: Thumbnail
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error downloading image:', error);
-      alert('Failed to download image');
+      // Fallback: open in new tab
+      window.open(thumbnail.imageUrl, '_blank');
     }
   };
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-white">Generated Thumbnails</h2>
+      <h2 className="text-xl font-semibold text-white">Generated Thumbnails ({thumbnails.length})</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {thumbnails.map((thumbnail) => (
           <Card key={thumbnail.id} className="space-y-3">
             <div className="relative w-full aspect-video bg-gray-900 rounded overflow-hidden">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={thumbnail.imageUrl}
                 alt="Generated thumbnail"
-                fill
-                className="object-contain"
+                className="w-full h-full object-contain"
+                loading="lazy"
               />
             </div>
             <div className="space-y-2">
