@@ -51,7 +51,6 @@ export default function ThumbnailGenerator() {
           youtubeUrl,
           templateId,
           designOptions,
-          avatarDataUrl: designOptions.includeAvatar ? avatarDataUrl : undefined,
         }),
       });
 
@@ -61,7 +60,6 @@ export default function ThumbnailGenerator() {
         throw new Error(data.error || 'Failed to generate thumbnail');
       }
 
-      // Update video metadata from API response
       if (data.videoMetadata) {
         setVideoMetadata(data.videoMetadata);
       }
@@ -95,9 +93,13 @@ export default function ThumbnailGenerator() {
     await doGenerate(thumbnail.templateId);
   };
 
+  const handleDesignOptionsChange = (opts: DesignOptions) => {
+    setDesignOptions(opts);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* Left Panel - Input Controls */}
+      {/* Left Panel */}
       <div className="lg:col-span-1 space-y-6">
         <Card>
           <h2 className="text-xl font-semibold text-white mb-4">YouTube URL</h2>
@@ -122,13 +124,15 @@ export default function ThumbnailGenerator() {
           <AvatarUpload
             avatarDataUrl={avatarDataUrl}
             onAvatarChange={setAvatarDataUrl}
+            avatarDescription={designOptions.avatarDescription}
+            onDescriptionChange={(desc) => handleDesignOptionsChange({ ...designOptions, avatarDescription: desc })}
             disabled={isLoading}
           />
         </Card>
 
         <DesignOptionsPanel
           options={designOptions}
-          onChange={setDesignOptions}
+          onChange={handleDesignOptionsChange}
           disabled={isLoading}
         />
 
@@ -156,24 +160,21 @@ export default function ThumbnailGenerator() {
         )}
       </div>
 
-      {/* Right Panel - Preview & Gallery */}
+      {/* Right Panel */}
       <div className="lg:col-span-2 space-y-6">
         <VideoPreview metadata={videoMetadata} />
 
         {currentThumbnail && (
           <Card>
             <h2 className="text-xl font-semibold text-white mb-4">Latest Thumbnail</h2>
-            <div className={`relative w-full bg-gray-900 rounded overflow-hidden ${
-              designOptions.aspectRatio === 'portrait' ? 'max-w-sm mx-auto' : ''
-            }`} style={{
-              aspectRatio: designOptions.aspectRatio === 'landscape' ? '16/9' : '9/16',
-            }}>
+            <div
+              className={`relative w-full bg-gray-900 rounded overflow-hidden ${
+                designOptions.aspectRatio === 'portrait' ? 'max-w-sm mx-auto' : ''
+              }`}
+              style={{ aspectRatio: designOptions.aspectRatio === 'landscape' ? '16/9' : '9/16' }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={currentThumbnail}
-                alt="Generated thumbnail"
-                className="w-full h-full object-contain"
-              />
+              <img src={currentThumbnail} alt="Generated thumbnail" className="w-full h-full object-contain" />
             </div>
           </Card>
         )}

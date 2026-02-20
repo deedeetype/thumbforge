@@ -47,6 +47,7 @@ export interface DesignOptions {
   aspectRatio: AspectRatio;
   mood: MoodAccent;
   headlineText: string;
+  avatarDescription: string;
 }
 
 export const defaultDesignOptions: DesignOptions = {
@@ -61,6 +62,7 @@ export const defaultDesignOptions: DesignOptions = {
   aspectRatio: 'landscape',
   mood: 'hype',
   headlineText: '',
+  avatarDescription: '',
 };
 
 export interface GeneratedThumbnail {
@@ -77,7 +79,6 @@ export interface GenerateThumbnailRequest {
   youtubeUrl: string;
   templateId: string;
   designOptions: DesignOptions;
-  avatarDataUrl?: string;
 }
 
 export interface GenerateThumbnailResponse {

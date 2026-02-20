@@ -7,7 +7,7 @@ import { GenerateThumbnailRequest, GenerateThumbnailResponse, defaultDesignOptio
 export async function POST(request: NextRequest) {
   try {
     const body: GenerateThumbnailRequest = await request.json();
-    const { youtubeUrl, templateId, designOptions, avatarDataUrl } = body;
+    const { youtubeUrl, templateId, designOptions } = body;
 
     if (!youtubeUrl || !templateId) {
       return NextResponse.json(
@@ -31,22 +31,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch video metadata — this is used both for prompt context AND returned to frontend
     const videoMetadata = await fetchVideoMetadata(youtubeUrl);
-    console.log('Video metadata fetched:', JSON.stringify(videoMetadata));
-
     const options = { ...defaultDesignOptions, ...designOptions };
-    const hasAvatar = !!(options.includeAvatar && avatarDataUrl);
-    const prompt = buildPrompt(template, videoMetadata, options, hasAvatar);
+    const prompt = buildPrompt(template, videoMetadata, options);
 
     console.log('Generated prompt:', prompt);
 
-    const imageUrl = await generateThumbnailWithPoe(prompt, options.aspectRatio, hasAvatar ? avatarDataUrl : undefined);
+    const imageUrl = await generateThumbnailWithPoe(prompt, options.aspectRatio);
 
     const response: GenerateThumbnailResponse = {
       success: true,
       imageUrl,
-      videoMetadata, // Return metadata to frontend for display
+      videoMetadata,
     };
 
     return NextResponse.json(response);

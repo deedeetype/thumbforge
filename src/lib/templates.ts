@@ -5,37 +5,37 @@ export const templates: Template[] = [
     id: 'bold-bright',
     name: 'Bold & Bright',
     description: 'High contrast, large text, vibrant colors, face close-ups',
-    promptStyle: 'Style: vibrant, eye-catching, high contrast colors, large bold text overlays, energetic and attention-grabbing.',
+    promptStyle: 'Style: BOLD & BRIGHT — Extremely vibrant and saturated colors, high contrast, neon glows, explosive energy. Use real brand logos and icons where relevant to the topic. Include bold graphic elements like thick arrows, star bursts, exclamation marks, and 3D text effects. Think MrBeast-level thumbnails.',
   },
   {
     id: 'cinematic',
     name: 'Cinematic',
     description: 'Dark tones, dramatic lighting, movie-poster style',
-    promptStyle: 'Style: cinematic movie-poster aesthetic, dramatic lighting, dark moody tones, deep shadows, high production value.',
+    promptStyle: 'Style: CINEMATIC — Dark moody tones, dramatic side lighting with strong rim lights, lens flares, shallow depth of field, film grain texture. Composition like a Hollywood movie poster. Use recognizable real-world objects, vehicles, buildings, or brand elements where relevant. Deep shadows, volumetric fog or smoke for atmosphere.',
   },
   {
     id: 'minimalist',
     name: 'Minimalist',
     description: 'Clean, simple, lots of whitespace, elegant typography',
-    promptStyle: 'Style: clean minimalist design, elegant simple typography, one key focal element, limited color palette, sophisticated modern.',
+    promptStyle: 'Style: MINIMALIST — Ultra-clean composition, generous negative space, one strong focal element. Elegant sans-serif typography. Use real product photos, real app icons, or real brand logos if relevant to topic. Subtle gradients, sharp lines, Apple-level design sophistication.',
   },
   {
     id: 'clickbait-pro',
     name: 'Clickbait Pro',
     description: 'Arrows, circles, shocked faces, bright yellow/red',
-    promptStyle: 'Style: clickbait thumbnail, arrows pointing to key elements, circles highlighting details, dramatic contrast, irresistible to click.',
+    promptStyle: 'Style: CLICKBAIT PRO — Maximum attention-grabbing design. THICK red arrows pointing at key elements, bright yellow circles with "?!" or "WOW", red/yellow color scheme, dramatic zoom effects. Include real recognizable objects, money bills, real brand logos, real product images where relevant. Everything screams "CLICK ME!"',
   },
   {
     id: 'tech-tutorial',
     name: 'Tech/Tutorial',
     description: 'Code snippets, gradients, clean professional look',
-    promptStyle: 'Style: professional tech-focused, clean gradients, code snippets or tech UI elements, sleek modern appearance, blues and purples.',
+    promptStyle: 'Style: TECH/TUTORIAL — Professional developer aesthetic. Include REAL programming language logos (Python, JavaScript, React, etc.), real app/tool icons (VS Code, GitHub, Docker, AWS), real terminal/code snippets. Clean gradients (blue-purple or dark-teal). Floating UI elements, glassmorphism cards, circuit board patterns.',
   },
   {
     id: 'vlog-style',
     name: 'Vlog Style',
     description: 'Warm tones, lifestyle feel, personal touch',
-    promptStyle: 'Style: warm personal vlog aesthetic, lifestyle feel, warm color tones, natural lighting, friendly approachable vibe.',
+    promptStyle: 'Style: VLOG — Warm golden-hour lighting, lifestyle photography feel, bokeh background. Include real recognizable locations, real food brands, real travel destinations, real everyday objects where relevant. Authentic and relatable, like an Instagram story cover. Hand-drawn doodles or sticker overlays for fun.',
   },
 ];
 
@@ -46,71 +46,79 @@ export function getTemplate(id: string): Template | undefined {
 export function buildPrompt(
   template: Template,
   videoMetadata: VideoMetadata,
-  designOptions: DesignOptions,
-  hasAvatar: boolean
+  designOptions: DesignOptions
 ): string {
   const isLandscape = designOptions.aspectRatio === 'landscape';
   const dimensions = isLandscape ? '1280x720' : '1080x1920';
-  const ratio = isLandscape ? '16:9 landscape' : '9:16 vertical/portrait';
-  const formatLabel = isLandscape ? 'long-form' : 'short';
+  const ratio = isLandscape ? '16:9 landscape' : '9:16 vertical portrait';
+  const formatLabel = isLandscape ? 'long-form' : 'YouTube Short';
 
   const moodConfig = moodConfigs.find((m) => m.id === designOptions.mood);
   const headline = designOptions.headlineText || videoMetadata.title;
 
-  // ===== BUILD THE PROMPT =====
-  const prompt = `Generate a YouTube thumbnail image.
+  const prompt = `Generate a single stunning YouTube thumbnail image.
 
-CRITICAL — Output dimensions: ${dimensions} pixels, ${ratio} aspect ratio. This is a ${formatLabel} YouTube thumbnail.
-${isLandscape ? 'The image MUST be wider than tall (landscape orientation).' : 'The image MUST be taller than wide (portrait/vertical orientation, like a phone screen).'}
+=== MANDATORY FORMAT ===
+Dimensions: ${dimensions} pixels (${ratio}).
+This is a ${formatLabel} thumbnail.
+${isLandscape
+    ? 'The image MUST be in LANDSCAPE orientation — WIDER than tall. Horizontal rectangle.'
+    : 'The image MUST be in PORTRAIT orientation — TALLER than wide. Vertical rectangle like a phone screen.'}
 
+=== VISUAL STYLE ===
 ${template.promptStyle}
 
-VIDEO CONTEXT (use this to make the thumbnail relevant to the actual video content):
-- Video Title: "${videoMetadata.title}"
-${videoMetadata.author_name ? `- Channel/Creator: "${videoMetadata.author_name}"` : ''}
-Use the video title and channel context to determine the visual theme, relevant imagery, icons, and scene setting for the thumbnail. The thumbnail should clearly communicate what this video is about at a glance.
+=== VIDEO CONTEXT (use this to determine visual theme and relevant imagery) ===
+Video Title: "${videoMetadata.title}"
+${videoMetadata.author_name ? `Channel: "${videoMetadata.author_name}"` : ''}
+IMPORTANT: Base the thumbnail's visual elements, objects, icons, and scene on the actual video topic above. If the video is about cooking, show real food and kitchen tools. If about tech, show real devices and logos. If about finance, show real money, charts, brand logos. Make it RELEVANT.
 
-${moodConfig && moodConfig.id !== 'none' ? `COLOR PALETTE — Mood: ${moodConfig.emoji} ${moodConfig.label}
-Use ONLY ${moodConfig.colorName} (${moodConfig.color}) as the dominant accent color throughout. Dark background base.
+${moodConfig && moodConfig.id !== 'none' ? `=== MOOD & COLOR ACCENT: ${moodConfig.emoji} ${moodConfig.label.toUpperCase()} ===
+Dominant accent color: ${moodConfig.colorName} (${moodConfig.color}). Dark background base.
+MANDATORY accent elements:
+• Diagonal accent stripe in the top-right corner (${moodConfig.colorName})
+• ${moodConfig.colorName} glow or rim light around the main subject
+• Small decorative ${moodConfig.colorName} circle/dot in one corner as signature
+• ALL graphic elements (arrows, shapes, icons, borders) use ${moodConfig.colorName} ONLY
+` : ''}=== TYPOGRAPHY ===
+${designOptions.showVideoTitle ? `• LARGE, BOLD, UPPERCASE sans-serif headline (Anton/Impact style)
+• Headline text: "${headline}"
+• Text color: ${designOptions.fontColor === '#FFFFFF' ? 'PURE WHITE' : designOptions.fontColor} with THICK black outline/stroke and hard black drop shadow
+• Text position: ${designOptions.textPosition === 'top' ? 'TOP area of the image' : designOptions.textPosition === 'center' ? 'CENTER of the image' : isLandscape ? 'LOWER-LEFT area' : 'CENTER-BOTTOM area'}
+• Text occupies max 40% of canvas
+• Make the text POP — it must be readable even at small thumbnail size` : '• NO text whatsoever. Pure visual thumbnail.'}
+${designOptions.showChannelTitle && videoMetadata.author_name ? `• Channel name "${videoMetadata.author_name}" in smaller subtle text near the ${designOptions.textPosition === 'top' ? 'top' : 'bottom'} edge` : ''}
 
-Accent Usage (mandatory):
-- A diagonal accent stripe in the top-right corner using ${moodConfig.colorName}.
-- A subtle ${moodConfig.colorName} glow or rim light around the main subject.
-- A small decorative ${moodConfig.colorName} circle or dot element in one corner as a visual signature.
-- Any graphic elements (arrows, shapes, icons) must use ${moodConfig.colorName} ONLY.
-` : ''}TYPOGRAPHY:
-${designOptions.showVideoTitle ? `- Large, bold, uppercase sans-serif headline text (Anton or Impact style).
-- The headline reads exactly: "${headline}"
-- Text color: ${designOptions.fontColor === '#FFFFFF' ? 'pure white' : designOptions.fontColor} with a thick black outline/stroke and a hard black drop shadow.
-- Text positioned in the ${designOptions.textPosition === 'top' ? 'upper area of the image' : designOptions.textPosition === 'center' ? 'center of the image' : isLandscape ? 'lower-left area' : 'center-bottom area'}.
-- Text should occupy no more than 40% of the canvas.` : '- Do NOT include any text or title in the thumbnail. Pure visual only.'}
-${designOptions.showChannelTitle && videoMetadata.author_name ? `- Include the channel name "${videoMetadata.author_name}" in smaller, subtle text near the ${designOptions.textPosition === 'bottom' ? 'bottom' : 'top'} edge.` : ''}
+=== SUBJECT / CHARACTER ===
+${designOptions.includeAvatar ? `INCLUDE A PERSON in the thumbnail.
+${designOptions.avatarDescription ? `Person appearance: ${designOptions.avatarDescription}` : 'A confident, expressive content creator.'}
+FACIAL EXPRESSION (critical): ${moodConfig?.expression || 'natural engaging expression'}
+The expression must be EXAGGERATED and DRAMATIC — this is a thumbnail, not a passport photo.
+${isLandscape
+    ? `Place the person on the ${designOptions.avatarPosition.toUpperCase()} side of the frame.`
+    : 'Place the person in the UPPER HALF of the frame.'}
+• Person has a thin ${moodConfig?.colorName || 'accent'}-colored glowing border/outline
+• Bold front lighting, high contrast against dark background
+• Person should look DYNAMIC — leaning in, gesturing, expressive body language
+• Show from chest/waist up, not just a floating head` :
+`NO person or character.
+Use bold visual elements relevant to the video topic:
+• Real objects, real product images, real brand logos where appropriate
+• Abstract geometric shapes, light streaks, bokeh in accent color
+• 3D elements, floating icons, dramatic composition
+• Make the scene visually STRIKING and immediately convey the video's topic`}
 
-SUBJECT / CHARACTER:
-${hasAvatar && designOptions.includeAvatar ? `- This thumbnail features a PERSON (the uploaded avatar reference image).
-- USE THE UPLOADED REFERENCE IMAGE as the person's likeness — match their face, features, and appearance.
-- Facial expression: ${moodConfig?.expression || 'natural, engaging expression'}.
-- ${isLandscape
-    ? `Place the person on the ${designOptions.avatarPosition} side of the frame.`
-    : 'Place the person in the upper half of the frame.'}
-- The person should have a thin ${moodConfig?.colorName || 'accent'}-colored border or glow outlining them.
-- Person should be bold, well-lit from the front, with high contrast against the dark background.
-- Person should appear dynamic and expressive, NOT static or stiff.` :
-designOptions.includeAvatar ? `- Include a character/person in the thumbnail.
-- Facial expression: ${moodConfig?.expression || 'natural, engaging expression'}.
-- ${isLandscape
-    ? `Place the character on the ${designOptions.avatarPosition} side of the frame.`
-    : 'Place the character in the upper half of the frame.'}
-- Character should have a thin ${moodConfig?.colorName || 'accent'}-colored border or glow outlining them.
-- Character should be bold, well-lit, high contrast, dynamic and expressive.` :
-`- No person or character. Use abstract geometric shapes, light streaks, bokeh, or relevant visual elements in the accent color to fill the space.
-- Keep composition dynamic and visually interesting. Use imagery relevant to the video topic.`}
+=== BACKGROUND ===
+• Base color: ${designOptions.backgroundColor === '#000000' ? 'deep dark black/charcoal' : designOptions.backgroundColor}
+${designOptions.overlayOpacity > 0 ? `• Semi-transparent dark overlay at ~${designOptions.overlayOpacity}% opacity for text readability` : ''}
+• Background should complement the subject, not compete with it
 
-BACKGROUND:
-- Base background color: ${designOptions.backgroundColor === '#000000' ? 'deep dark/black' : designOptions.backgroundColor}.
-${designOptions.overlayOpacity > 0 ? `- Apply a semi-transparent dark overlay at ~${designOptions.overlayOpacity}% opacity for text readability.` : ''}
-
-FINAL REMINDER: The output image MUST be ${ratio} (${dimensions}px). ${isLandscape ? 'Landscape — wider than tall.' : 'Portrait — taller than wide.'}`;
+=== FINAL RULES ===
+• Output MUST be ${ratio} (${dimensions}px). ${isLandscape ? 'LANDSCAPE — wider than tall.' : 'PORTRAIT — taller than wide.'}
+• Thumbnail must be eye-catching at SMALL sizes (like in YouTube's sidebar)
+• Use REAL recognizable objects, logos, icons relevant to the topic — not generic clipart
+• Bold, dramatic, high-contrast — this needs to compete for clicks on YouTube
+• Professional quality, photorealistic or high-end digital art style`;
 
   return prompt;
 }

@@ -2,8 +2,7 @@ import { AspectRatio } from '@/types';
 
 export async function generateThumbnailWithPoe(
   prompt: string,
-  aspectRatio: AspectRatio,
-  avatarDataUrl?: string
+  aspectRatio: AspectRatio
 ): Promise<string> {
   const apiKey = process.env.POE_API_KEY;
 
@@ -14,19 +13,6 @@ export async function generateThumbnailWithPoe(
   const aspectValue = aspectRatio === 'landscape' ? '16:9' : '9:16';
 
   try {
-    // Build message content
-    let messageContent: string | Array<Record<string, unknown>>;
-
-    if (avatarDataUrl) {
-      messageContent = [
-        { type: 'image_url', image_url: { url: avatarDataUrl } },
-        { type: 'text', text: prompt },
-      ];
-    } else {
-      messageContent = prompt;
-    }
-
-    // Use raw fetch to properly pass both standard and custom Poe params
     const response = await fetch('https://api.poe.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -35,7 +21,7 @@ export async function generateThumbnailWithPoe(
       },
       body: JSON.stringify({
         model: 'Grok-Imagine-Image',
-        messages: [{ role: 'user', content: messageContent }],
+        messages: [{ role: 'user', content: prompt }],
         stream: false,
         aspect: aspectValue,
       }),
@@ -54,24 +40,21 @@ export async function generateThumbnailWithPoe(
       throw new Error('No content in API response');
     }
 
-    // Check if it's a direct URL
+    // Extract image URL from response
     if (content.startsWith('http://') || content.startsWith('https://')) {
       return content.trim();
     }
 
-    // Check for markdown image
     const markdownImageMatch = content.match(/!\[.*?\]\((https?:\/\/[^\)]+)\)/);
     if (markdownImageMatch) {
       return markdownImageMatch[1];
     }
 
-    // Check for URL in text
     const urlMatch = content.match(/(https?:\/\/[^\s\)\"\']+\.(png|jpg|jpeg|webp|gif)[^\s\)\"\']*)/i);
     if (urlMatch) {
       return urlMatch[1];
     }
 
-    // Any URL at all
     const anyUrlMatch = content.match(/(https?:\/\/[^\s\)\"\']+)/);
     if (anyUrlMatch) {
       return anyUrlMatch[1];
