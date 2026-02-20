@@ -11,9 +11,10 @@ export async function generateThumbnailWithPoe(
     throw new Error('POE_API_KEY is not configured');
   }
 
-  const aspectValue = aspectRatio === 'landscape' ? '16:9' : '9:16';
+  // GPT-Image-1.5 uses OpenAI-style size param: "WxH"
+  const sizeValue = aspectRatio === 'landscape' ? '1536x1024' : '1024x1536';
 
-  // Build message content — include avatar image if provided
+  // Build message content
   let messageContent: string | Array<Record<string, unknown>>;
 
   if (avatarDataUrl) {
@@ -39,10 +40,10 @@ export async function generateThumbnailWithPoe(
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'Grok-Imagine-Image',
+        model: 'GPT-Image-1.5',
         messages: [{ role: 'user', content: messageContent }],
         stream: false,
-        aspect: aspectValue,
+        size: sizeValue,
       }),
     });
 

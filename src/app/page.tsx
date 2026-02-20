@@ -22,7 +22,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="mt-16 text-center text-gray-500 text-sm">
-          <p>Built with Next.js, Tailwind CSS, and Grok-Imagine-Image</p>
+          <p>Built with Next.js, Tailwind CSS, and GPT-Image-1.5</p>
         </footer>
       </div>
     </main>
