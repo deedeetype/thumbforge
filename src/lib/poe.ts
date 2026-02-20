@@ -17,10 +17,8 @@ export async function generateThumbnailWithPoe(
     baseURL: 'https://api.poe.com/v1',
   });
 
-  // Map aspect ratio to actual pixel dimensions for Poe extra_body
-  const aspectDimensions = aspectRatio === 'landscape'
-    ? '1280x720'
-    : '1080x1920';
+  // Poe expects aspect ratio as "16:9" or "9:16", not pixel dimensions
+  const aspectValue = aspectRatio === 'landscape' ? '16:9' : '9:16';
 
   try {
     const messages: OpenAI.ChatCompletionMessageParam[] = [];
@@ -54,8 +52,7 @@ export async function generateThumbnailWithPoe(
       },
       {
         body: {
-          aspect: aspectDimensions,
-          size: aspectDimensions,
+          aspect: aspectValue,
         },
       }
     );
