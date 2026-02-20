@@ -1,6 +1,6 @@
 'use client';
 
-import { DesignOptions } from '@/types';
+import { DesignOptions, moodConfigs, MoodAccent, AspectRatio } from '@/types';
 import Card from './ui/Card';
 
 interface DesignOptionsProps {
@@ -17,7 +17,73 @@ export default function DesignOptionsPanel({ options, onChange, disabled }: Desi
   return (
     <Card>
       <h2 className="text-xl font-semibold text-white mb-4">Design Options</h2>
-      <div className="space-y-4">
+      <div className="space-y-5">
+
+        {/* Aspect Ratio */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Video Format</label>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              { id: 'landscape' as AspectRatio, label: '🖥️ Long Video', sub: '1280×720 (16:9)' },
+              { id: 'portrait' as AspectRatio, label: '📱 Short', sub: '1080×1920 (9:16)' },
+            ]).map((fmt) => (
+              <button
+                key={fmt.id}
+                onClick={() => update({ aspectRatio: fmt.id })}
+                disabled={disabled}
+                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                  options.aspectRatio === fmt.id
+                    ? 'border-blue-500 bg-blue-900/20'
+                    : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <div className="font-medium text-white text-sm">{fmt.label}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{fmt.sub}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Mood Accent */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Mood & Accent Color</label>
+          <div className="grid grid-cols-3 gap-2">
+            {moodConfigs.map((mood) => (
+              <button
+                key={mood.id}
+                onClick={() => update({ mood: mood.id as MoodAccent })}
+                disabled={disabled}
+                className={`p-2.5 rounded-lg border-2 text-center transition-all ${
+                  options.mood === mood.id
+                    ? 'border-blue-500 bg-blue-900/20'
+                    : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <div className="text-lg">{mood.emoji}</div>
+                <div className="text-xs text-white font-medium mt-1">{mood.label}</div>
+                <div
+                  className="w-3 h-3 rounded-full mx-auto mt-1"
+                  style={{ backgroundColor: mood.color }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Headline Override */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">
+            Custom Headline <span className="text-gray-500">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={options.headlineText}
+            onChange={(e) => update({ headlineText: e.target.value })}
+            placeholder="Uses video title if empty"
+            disabled={disabled}
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
         {/* Colors */}
         <div className="grid grid-cols-2 gap-4">
@@ -35,7 +101,7 @@ export default function DesignOptionsPanel({ options, onChange, disabled }: Desi
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Background Color</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Background</label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -71,7 +137,7 @@ export default function DesignOptionsPanel({ options, onChange, disabled }: Desi
           />
         </div>
 
-        {/* Avatar position (only if avatar enabled) */}
+        {/* Avatar position */}
         {options.includeAvatar && (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Avatar Position</label>
@@ -118,7 +184,7 @@ export default function DesignOptionsPanel({ options, onChange, disabled }: Desi
         {/* Overlay opacity */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">
-            Text Overlay Opacity: {options.overlayOpacity}%
+            Overlay Opacity: {options.overlayOpacity}%
           </label>
           <input
             type="range"

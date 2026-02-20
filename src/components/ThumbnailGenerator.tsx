@@ -68,6 +68,7 @@ export default function ThumbnailGenerator() {
         templateName: templates.find((t) => t.id === templateId)?.name || 'Unknown',
         timestamp: Date.now(),
         videoTitle: videoMetadata?.title,
+        aspectRatio: designOptions.aspectRatio,
       };
 
       setCurrentThumbnail(data.imageUrl);
