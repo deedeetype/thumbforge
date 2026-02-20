@@ -2,7 +2,8 @@ import { AspectRatio } from '@/types';
 
 export async function generateThumbnailWithPoe(
   prompt: string,
-  aspectRatio: AspectRatio
+  aspectRatio: AspectRatio,
+  avatarDataUrl?: string
 ): Promise<string> {
   const apiKey = process.env.POE_API_KEY;
 
@@ -11,6 +12,24 @@ export async function generateThumbnailWithPoe(
   }
 
   const aspectValue = aspectRatio === 'landscape' ? '16:9' : '9:16';
+
+  // Build message content — include avatar image if provided
+  let messageContent: string | Array<Record<string, unknown>>;
+
+  if (avatarDataUrl) {
+    messageContent = [
+      {
+        type: 'image_url',
+        image_url: { url: avatarDataUrl },
+      },
+      {
+        type: 'text',
+        text: prompt,
+      },
+    ];
+  } else {
+    messageContent = prompt;
+  }
 
   try {
     const response = await fetch('https://api.poe.com/v1/chat/completions', {
@@ -21,7 +40,7 @@ export async function generateThumbnailWithPoe(
       },
       body: JSON.stringify({
         model: 'Grok-Imagine-Image',
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: messageContent }],
         stream: false,
         aspect: aspectValue,
       }),
@@ -40,7 +59,7 @@ export async function generateThumbnailWithPoe(
       throw new Error('No content in API response');
     }
 
-    // Extract image URL from response
+    // Extract image URL
     if (content.startsWith('http://') || content.startsWith('https://')) {
       return content.trim();
     }

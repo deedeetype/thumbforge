@@ -62,7 +62,7 @@ export default function AvatarUpload({
           )}
         </div>
       </div>
-      <p className="text-xs text-gray-500">Photo is for your reference only — not sent to the AI.</p>
+      <p className="text-xs text-gray-500">Photo is sent to the AI as a likeness reference for generation.</p>
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1">

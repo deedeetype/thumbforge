@@ -79,6 +79,7 @@ export interface GenerateThumbnailRequest {
   youtubeUrl: string;
   templateId: string;
   designOptions: DesignOptions;
+  avatarDataUrl?: string;
 }
 
 export interface GenerateThumbnailResponse {

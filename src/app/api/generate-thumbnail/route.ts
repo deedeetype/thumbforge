@@ -7,7 +7,7 @@ import { GenerateThumbnailRequest, GenerateThumbnailResponse, defaultDesignOptio
 export async function POST(request: NextRequest) {
   try {
     const body: GenerateThumbnailRequest = await request.json();
-    const { youtubeUrl, templateId, designOptions } = body;
+    const { youtubeUrl, templateId, designOptions, avatarDataUrl } = body;
 
     if (!youtubeUrl || !templateId) {
       return NextResponse.json(
@@ -33,11 +33,13 @@ export async function POST(request: NextRequest) {
 
     const videoMetadata = await fetchVideoMetadata(youtubeUrl);
     const options = { ...defaultDesignOptions, ...designOptions };
-    const prompt = buildPrompt(template, videoMetadata, options);
+    const hasAvatarImage = !!(options.includeAvatar && avatarDataUrl);
+    const prompt = buildPrompt(template, videoMetadata, options, hasAvatarImage);
 
     console.log('Generated prompt:', prompt);
 
-    const imageUrl = await generateThumbnailWithPoe(prompt, options.aspectRatio);
+    const sendAvatar = options.includeAvatar && avatarDataUrl ? avatarDataUrl : undefined;
+    const imageUrl = await generateThumbnailWithPoe(prompt, options.aspectRatio, sendAvatar);
 
     const response: GenerateThumbnailResponse = {
       success: true,

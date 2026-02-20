@@ -51,6 +51,7 @@ export default function ThumbnailGenerator() {
           youtubeUrl,
           templateId,
           designOptions,
+          avatarDataUrl: designOptions.includeAvatar ? avatarDataUrl : undefined,
         }),
       });
 

@@ -46,7 +46,8 @@ export function getTemplate(id: string): Template | undefined {
 export function buildPrompt(
   template: Template,
   videoMetadata: VideoMetadata,
-  designOptions: DesignOptions
+  designOptions: DesignOptions,
+  hasAvatarImage: boolean = false
 ): string {
   const isLandscape = designOptions.aspectRatio === 'landscape';
   const dimensions = isLandscape ? '1280x720' : '1080x1920';
@@ -91,16 +92,18 @@ ${designOptions.showChannelTitle && videoMetadata.author_name ? `• Channel nam
 
 === SUBJECT / CHARACTER ===
 ${designOptions.includeAvatar ? `INCLUDE A PERSON in the thumbnail.
-${designOptions.avatarDescription ? `Person appearance: ${designOptions.avatarDescription}` : 'A confident, expressive content creator.'}
-FACIAL EXPRESSION (critical): ${moodConfig?.expression || 'natural engaging expression'}
-The expression must be EXAGGERATED and DRAMATIC — this is a thumbnail, not a passport photo.
+${hasAvatarImage ? `CRITICAL: The attached/uploaded reference image shows the EXACT person to use. You MUST use their face, features, skin tone, and likeness in the generated thumbnail. This is a reference photo — reproduce this person's appearance faithfully but in the thumbnail style described below.` : ''}
+${designOptions.avatarDescription ? `Person appearance details: ${designOptions.avatarDescription}` : hasAvatarImage ? '' : 'A confident, expressive content creator.'}
+FACIAL EXPRESSION (critical — override the reference photo expression): ${moodConfig?.expression || 'natural engaging expression'}
+The expression must be EXAGGERATED and DRAMATIC — this is a YouTube thumbnail, not a passport photo. Even if the reference photo shows a neutral face, generate the person with the specified dramatic expression.
 ${isLandscape
     ? `Place the person on the ${designOptions.avatarPosition.toUpperCase()} side of the frame.`
     : 'Place the person in the UPPER HALF of the frame.'}
 • Person has a thin ${moodConfig?.colorName || 'accent'}-colored glowing border/outline
 • Bold front lighting, high contrast against dark background
 • Person should look DYNAMIC — leaning in, gesturing, expressive body language
-• Show from chest/waist up, not just a floating head` :
+• Show from chest/waist up, not just a floating head
+${hasAvatarImage ? `• IMPORTANT: Generate a NEW image in the thumbnail style — do NOT simply paste or crop the reference photo. Create a fresh composition using the person's likeness with the mood expression and all design elements described.` : ''}` :
 `NO person or character.
 Use bold visual elements relevant to the video topic:
 • Real objects, real product images, real brand logos where appropriate
