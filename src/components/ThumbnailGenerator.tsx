@@ -61,13 +61,18 @@ export default function ThumbnailGenerator() {
         throw new Error(data.error || 'Failed to generate thumbnail');
       }
 
+      // Update video metadata from API response
+      if (data.videoMetadata) {
+        setVideoMetadata(data.videoMetadata);
+      }
+
       const newThumbnail: GeneratedThumbnail = {
         id: Date.now().toString(),
         imageUrl: data.imageUrl,
         templateId,
         templateName: templates.find((t) => t.id === templateId)?.name || 'Unknown',
         timestamp: Date.now(),
-        videoTitle: videoMetadata?.title,
+        videoTitle: data.videoMetadata?.title || videoMetadata?.title,
         aspectRatio: designOptions.aspectRatio,
       };
 
@@ -158,7 +163,11 @@ export default function ThumbnailGenerator() {
         {currentThumbnail && (
           <Card>
             <h2 className="text-xl font-semibold text-white mb-4">Latest Thumbnail</h2>
-            <div className="relative w-full aspect-video bg-gray-900 rounded overflow-hidden">
+            <div className={`relative w-full bg-gray-900 rounded overflow-hidden ${
+              designOptions.aspectRatio === 'portrait' ? 'max-w-sm mx-auto' : ''
+            }`} style={{
+              aspectRatio: designOptions.aspectRatio === 'landscape' ? '16/9' : '9/16',
+            }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={currentThumbnail}

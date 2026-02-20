@@ -1,7 +1,9 @@
 import OpenAI from 'openai';
+import { AspectRatio } from '@/types';
 
 export async function generateThumbnailWithPoe(
   prompt: string,
+  aspectRatio: AspectRatio,
   avatarDataUrl?: string
 ): Promise<string> {
   const apiKey = process.env.POE_API_KEY;
@@ -15,8 +17,12 @@ export async function generateThumbnailWithPoe(
     baseURL: 'https://api.poe.com/v1',
   });
 
+  // Map aspect ratio to actual pixel dimensions for Poe extra_body
+  const aspectDimensions = aspectRatio === 'landscape'
+    ? '1280x720'
+    : '1080x1920';
+
   try {
-    // Build messages - if avatar provided, include it as an image for reference
     const messages: OpenAI.ChatCompletionMessageParam[] = [];
 
     if (avatarDataUrl) {
@@ -29,7 +35,7 @@ export async function generateThumbnailWithPoe(
           },
           {
             type: 'text',
-            text: 'This is the avatar/person to include in the thumbnail. Use their likeness in the generated image.\n\n' + prompt,
+            text: prompt,
           },
         ],
       });
@@ -40,11 +46,19 @@ export async function generateThumbnailWithPoe(
       });
     }
 
-    const response = await client.chat.completions.create({
-      model: 'Grok-Imagine-Image',
-      messages,
-      stream: false,
-    });
+    const response = await client.chat.completions.create(
+      {
+        model: 'Grok-Imagine-Image',
+        messages,
+        stream: false,
+      },
+      {
+        body: {
+          aspect: aspectDimensions,
+          size: aspectDimensions,
+        },
+      }
+    );
 
     const content = response.choices[0]?.message?.content;
 
@@ -75,7 +89,6 @@ export async function generateThumbnailWithPoe(
       return anyUrlMatch[1];
     }
 
-    // Return raw content as fallback
     return content;
   } catch (error) {
     console.error('Error generating thumbnail with Poe:', error);

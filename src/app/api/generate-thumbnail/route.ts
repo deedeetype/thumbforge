@@ -31,16 +31,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch video metadata — this is used both for prompt context AND returned to frontend
     const videoMetadata = await fetchVideoMetadata(youtubeUrl);
+    console.log('Video metadata fetched:', JSON.stringify(videoMetadata));
+
     const options = { ...defaultDesignOptions, ...designOptions };
     const hasAvatar = !!(options.includeAvatar && avatarDataUrl);
     const prompt = buildPrompt(template, videoMetadata, options, hasAvatar);
 
-    const imageUrl = await generateThumbnailWithPoe(prompt, hasAvatar ? avatarDataUrl : undefined);
+    console.log('Generated prompt:', prompt);
+
+    const imageUrl = await generateThumbnailWithPoe(prompt, options.aspectRatio, hasAvatar ? avatarDataUrl : undefined);
 
     const response: GenerateThumbnailResponse = {
       success: true,
       imageUrl,
+      videoMetadata, // Return metadata to frontend for display
     };
 
     return NextResponse.json(response);

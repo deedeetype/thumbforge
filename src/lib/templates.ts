@@ -1,51 +1,46 @@
-import { Template, DesignOptions, moodConfigs } from '@/types';
+import { Template, DesignOptions, VideoMetadata, moodConfigs } from '@/types';
 
 export const templates: Template[] = [
   {
     id: 'bold-bright',
     name: 'Bold & Bright',
     description: 'High contrast, large text, vibrant colors, face close-ups',
-    promptStyle: 'Create a vibrant, eye-catching YouTube thumbnail with high contrast colors. Use large, bold text overlays. Include dramatic facial expressions or close-up shots. Make it energetic and attention-grabbing.',
+    promptStyle: 'Style: vibrant, eye-catching, high contrast colors, large bold text overlays, energetic and attention-grabbing.',
   },
   {
     id: 'cinematic',
     name: 'Cinematic',
     description: 'Dark tones, dramatic lighting, movie-poster style',
-    promptStyle: 'Create a cinematic, movie-poster style YouTube thumbnail with dramatic lighting and dark tones. Use moody atmosphere, deep shadows, and high production value aesthetics.',
+    promptStyle: 'Style: cinematic movie-poster aesthetic, dramatic lighting, dark moody tones, deep shadows, high production value.',
   },
   {
     id: 'minimalist',
     name: 'Minimalist',
     description: 'Clean, simple, lots of whitespace, elegant typography',
-    promptStyle: 'Create a clean, minimalist YouTube thumbnail. Use elegant, simple typography. Focus on one key element or concept. Use a limited color palette. Sophisticated and modern.',
+    promptStyle: 'Style: clean minimalist design, elegant simple typography, one key focal element, limited color palette, sophisticated modern.',
   },
   {
     id: 'clickbait-pro',
     name: 'Clickbait Pro',
     description: 'Arrows, circles, shocked faces, bright yellow/red',
-    promptStyle: 'Create an attention-grabbing clickbait-style YouTube thumbnail with shocked or surprised expressions, arrows pointing to key elements, circles highlighting details, and dramatic contrast.',
+    promptStyle: 'Style: clickbait thumbnail, arrows pointing to key elements, circles highlighting details, dramatic contrast, irresistible to click.',
   },
   {
     id: 'tech-tutorial',
     name: 'Tech/Tutorial',
     description: 'Code snippets, gradients, clean professional look',
-    promptStyle: 'Create a professional, tech-focused YouTube thumbnail with clean gradients, code snippets or tech elements, modern UI design, and a sleek professional appearance.',
+    promptStyle: 'Style: professional tech-focused, clean gradients, code snippets or tech UI elements, sleek modern appearance, blues and purples.',
   },
   {
     id: 'vlog-style',
     name: 'Vlog Style',
     description: 'Warm tones, lifestyle feel, personal touch',
-    promptStyle: 'Create a warm, personal vlog-style YouTube thumbnail with lifestyle aesthetics, warm color tones, natural lighting, and a friendly, approachable vibe.',
+    promptStyle: 'Style: warm personal vlog aesthetic, lifestyle feel, warm color tones, natural lighting, friendly approachable vibe.',
   },
 ];
 
 export function getTemplate(id: string): Template | undefined {
   return templates.find((t) => t.id === id);
-}
-
-interface VideoMetadata {
-  title: string;
-  author_name?: string;
 }
 
 export function buildPrompt(
@@ -55,89 +50,67 @@ export function buildPrompt(
   hasAvatar: boolean
 ): string {
   const isLandscape = designOptions.aspectRatio === 'landscape';
-  const dimensions = isLandscape ? '1280x720 (16:9 landscape)' : '1080x1920 (9:16 portrait/short)';
+  const dimensions = isLandscape ? '1280x720' : '1080x1920';
+  const ratio = isLandscape ? '16:9 landscape' : '9:16 vertical/portrait';
   const formatLabel = isLandscape ? 'long-form' : 'short';
 
   const moodConfig = moodConfigs.find((m) => m.id === designOptions.mood);
   const headline = designOptions.headlineText || videoMetadata.title;
 
-  const parts: string[] = [];
+  // ===== BUILD THE PROMPT =====
+  const prompt = `Generate a YouTube thumbnail image.
 
-  // Base style from template
-  parts.push(template.promptStyle);
+CRITICAL — Output dimensions: ${dimensions} pixels, ${ratio} aspect ratio. This is a ${formatLabel} YouTube thumbnail.
+${isLandscape ? 'The image MUST be wider than tall (landscape orientation).' : 'The image MUST be taller than wide (portrait/vertical orientation, like a phone screen).'}
 
-  // === DIMENSIONS ===
-  parts.push(`\nImage dimensions: ${dimensions}. This is a ${formatLabel} YouTube thumbnail.`);
+${template.promptStyle}
 
-  // === MOOD ACCENT SYSTEM ===
-  if (moodConfig && moodConfig.id !== 'none') {
-    parts.push(`
-Color Palette — Mood: ${moodConfig.emoji} ${moodConfig.label}
+VIDEO CONTEXT (use this to make the thumbnail relevant to the actual video content):
+- Video Title: "${videoMetadata.title}"
+${videoMetadata.author_name ? `- Channel/Creator: "${videoMetadata.author_name}"` : ''}
+Use the video title and channel context to determine the visual theme, relevant imagery, icons, and scene setting for the thumbnail. The thumbnail should clearly communicate what this video is about at a glance.
+
+${moodConfig && moodConfig.id !== 'none' ? `COLOR PALETTE — Mood: ${moodConfig.emoji} ${moodConfig.label}
 Use ONLY ${moodConfig.colorName} (${moodConfig.color}) as the dominant accent color throughout. Dark background base.
 
 Accent Usage (mandatory):
 - A diagonal accent stripe in the top-right corner using ${moodConfig.colorName}.
 - A subtle ${moodConfig.colorName} glow or rim light around the main subject.
 - A small decorative ${moodConfig.colorName} circle or dot element in one corner as a visual signature.
-- Any graphic elements (arrows, shapes, icons) must use ${moodConfig.colorName} ONLY.`);
-  }
+- Any graphic elements (arrows, shapes, icons) must use ${moodConfig.colorName} ONLY.
+` : ''}TYPOGRAPHY:
+${designOptions.showVideoTitle ? `- Large, bold, uppercase sans-serif headline text (Anton or Impact style).
+- The headline reads exactly: "${headline}"
+- Text color: ${designOptions.fontColor === '#FFFFFF' ? 'pure white' : designOptions.fontColor} with a thick black outline/stroke and a hard black drop shadow.
+- Text positioned in the ${designOptions.textPosition === 'top' ? 'upper area of the image' : designOptions.textPosition === 'center' ? 'center of the image' : isLandscape ? 'lower-left area' : 'center-bottom area'}.
+- Text should occupy no more than 40% of the canvas.` : '- Do NOT include any text or title in the thumbnail. Pure visual only.'}
+${designOptions.showChannelTitle && videoMetadata.author_name ? `- Include the channel name "${videoMetadata.author_name}" in smaller, subtle text near the ${designOptions.textPosition === 'bottom' ? 'bottom' : 'top'} edge.` : ''}
 
-  // === TYPOGRAPHY ===
-  parts.push(`
-Typography:
-- Large, bold, uppercase sans-serif headline text (similar to Anton or Impact style).
-- Text color: pure white with a thick black outline/stroke and a hard black drop shadow.
-- Text positioned in the ${isLandscape ? 'lower-left area' : 'center-bottom area'}.
-- Text should occupy no more than 40% of the canvas.
-- Headline text: "${headline}"`);
+SUBJECT / CHARACTER:
+${hasAvatar && designOptions.includeAvatar ? `- This thumbnail features a PERSON (the uploaded avatar reference image).
+- USE THE UPLOADED REFERENCE IMAGE as the person's likeness — match their face, features, and appearance.
+- Facial expression: ${moodConfig?.expression || 'natural, engaging expression'}.
+- ${isLandscape
+    ? `Place the person on the ${designOptions.avatarPosition} side of the frame.`
+    : 'Place the person in the upper half of the frame.'}
+- The person should have a thin ${moodConfig?.colorName || 'accent'}-colored border or glow outlining them.
+- Person should be bold, well-lit from the front, with high contrast against the dark background.
+- Person should appear dynamic and expressive, NOT static or stiff.` :
+designOptions.includeAvatar ? `- Include a character/person in the thumbnail.
+- Facial expression: ${moodConfig?.expression || 'natural, engaging expression'}.
+- ${isLandscape
+    ? `Place the character on the ${designOptions.avatarPosition} side of the frame.`
+    : 'Place the character in the upper half of the frame.'}
+- Character should have a thin ${moodConfig?.colorName || 'accent'}-colored border or glow outlining them.
+- Character should be bold, well-lit, high contrast, dynamic and expressive.` :
+`- No person or character. Use abstract geometric shapes, light streaks, bokeh, or relevant visual elements in the accent color to fill the space.
+- Keep composition dynamic and visually interesting. Use imagery relevant to the video topic.`}
 
-  // === SUBJECT/SCENE PLACEMENT ===
-  if (hasAvatar && designOptions.includeAvatar) {
-    const placement = isLandscape
-      ? `right side of the frame, positioned on the ${designOptions.avatarPosition}`
-      : 'upper half of the frame';
-    parts.push(`
-Subject Placement:
-- Place the person/avatar on the ${placement}.
-- Subject should have a thin ${moodConfig?.colorName || 'accent'}-colored border or glow outlining them.
-- Subject should be bold, well-lit from the front, with high contrast against the dark background.`);
-  } else {
-    parts.push(`
-Scene (no subject):
-- Use abstract geometric shapes, light streaks, or bokeh in the accent color to fill the space.
-- Keep composition dynamic and visually interesting.`);
-  }
+BACKGROUND:
+- Base background color: ${designOptions.backgroundColor === '#000000' ? 'deep dark/black' : designOptions.backgroundColor}.
+${designOptions.overlayOpacity > 0 ? `- Apply a semi-transparent dark overlay at ~${designOptions.overlayOpacity}% opacity for text readability.` : ''}
 
-  // === ADDITIONAL DESIGN OPTIONS ===
-  const directives: string[] = [];
+FINAL REMINDER: The output image MUST be ${ratio} (${dimensions}px). ${isLandscape ? 'Landscape — wider than tall.' : 'Portrait — taller than wide.'}`;
 
-  if (designOptions.fontColor !== '#FFFFFF') {
-    directives.push(`Override text color to ${designOptions.fontColor}.`);
-  }
-  if (designOptions.backgroundColor !== '#000000') {
-    directives.push(`Use ${designOptions.backgroundColor} as the background base color instead of pure black.`);
-  }
-  if (designOptions.overlayOpacity > 0 && designOptions.overlayOpacity !== 50) {
-    directives.push(`Apply a semi-transparent overlay at about ${designOptions.overlayOpacity}% opacity for text readability.`);
-  }
-  if (!designOptions.showVideoTitle) {
-    directives.push('Do NOT include any title text in the thumbnail. Focus on visuals only.');
-  }
-  if (designOptions.showChannelTitle && videoMetadata.author_name) {
-    directives.push(`Include the channel name "${videoMetadata.author_name}" in smaller, subtle text.`);
-  }
-
-  if (directives.length > 0) {
-    parts.push('\nAdditional directives:\n' + directives.join('\n'));
-  }
-
-  // === VIDEO CONTEXT ===
-  parts.push(`\nVideo context:\nTitle: "${videoMetadata.title}"`);
-  if (videoMetadata.author_name) {
-    parts.push(`Creator: ${videoMetadata.author_name}`);
-  }
-
-  parts.push(`\nCreate a professional YouTube thumbnail at ${dimensions} resolution. Clear, readable, optimized for both desktop and mobile viewing.`);
-
-  return parts.join('\n');
+  return prompt;
 }

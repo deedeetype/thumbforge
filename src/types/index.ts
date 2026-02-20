@@ -23,15 +23,16 @@ export interface MoodConfig {
   color: string;
   colorName: string;
   description: string;
+  expression: string; // facial expression directive for avatar/character
 }
 
 export const moodConfigs: MoodConfig[] = [
-  { id: 'hype', label: 'Hype', emoji: '🔥', color: '#FFD600', colorName: 'bold yellow', description: 'Bold yellow accents and glows' },
-  { id: 'shock', label: 'Shock', emoji: '😱', color: '#FF1744', colorName: 'vivid red', description: 'Vivid red accents and glows' },
-  { id: 'educational', label: 'Educational', emoji: '🧠', color: '#00E5FF', colorName: 'electric cyan/teal', description: 'Electric cyan/teal accents and glows' },
-  { id: 'money', label: 'Money', emoji: '💰', color: '#00FF66', colorName: 'bright neon green', description: 'Bright neon green accents and glows' },
-  { id: 'fun', label: 'Fun', emoji: '😂', color: '#FF6D00', colorName: 'vibrant orange', description: 'Vibrant orange accents and glows' },
-  { id: 'none', label: 'None', emoji: '⚪', color: '#FFFFFF', colorName: 'white', description: 'No mood accent — neutral style' },
+  { id: 'hype', label: 'Hype', emoji: '🔥', color: '#FFD600', colorName: 'bold yellow', description: 'Bold yellow accents and glows', expression: 'excited, hyped up, wide eyes with enthusiasm, big confident smile, pumped fist or open arms, radiating energy' },
+  { id: 'shock', label: 'Shock', emoji: '😱', color: '#FF1744', colorName: 'vivid red', description: 'Vivid red accents and glows', expression: 'shocked, jaw dropped wide open, eyes wide with disbelief, hands on cheeks or head, stunned frozen expression' },
+  { id: 'educational', label: 'Educational', emoji: '🧠', color: '#00E5FF', colorName: 'electric cyan/teal', description: 'Electric cyan/teal accents and glows', expression: 'thoughtful, slightly raised eyebrow, knowing smile, pointing finger up as if explaining, wise and confident look' },
+  { id: 'money', label: 'Money', emoji: '💰', color: '#00FF66', colorName: 'bright neon green', description: 'Bright neon green accents and glows', expression: 'smug, confident money grin, raised eyebrows, counting money gesture or holding cash, wealthy boss energy' },
+  { id: 'fun', label: 'Fun', emoji: '😂', color: '#FF6D00', colorName: 'vibrant orange', description: 'Vibrant orange accents and glows', expression: 'laughing hard, mouth wide open laughing, squinted eyes from laughing, playful silly face, pure joy' },
+  { id: 'none', label: 'None', emoji: '⚪', color: '#FFFFFF', colorName: 'white', description: 'No mood accent — neutral style', expression: 'neutral, calm, natural relaxed expression' },
 ];
 
 export interface DesignOptions {
@@ -45,7 +46,7 @@ export interface DesignOptions {
   overlayOpacity: number;
   aspectRatio: AspectRatio;
   mood: MoodAccent;
-  headlineText: string; // custom headline override
+  headlineText: string;
 }
 
 export const defaultDesignOptions: DesignOptions = {
@@ -82,5 +83,6 @@ export interface GenerateThumbnailRequest {
 export interface GenerateThumbnailResponse {
   success: boolean;
   imageUrl?: string;
+  videoMetadata?: VideoMetadata;
   error?: string;
 }

@@ -39,7 +39,14 @@ export default function ThumbnailGallery({ thumbnails, onRegenerate }: Thumbnail
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {thumbnails.map((thumbnail) => (
           <Card key={thumbnail.id} className="space-y-3">
-            <div className="relative w-full aspect-video bg-gray-900 rounded overflow-hidden">
+            <div
+              className={`relative w-full bg-gray-900 rounded overflow-hidden ${
+                thumbnail.aspectRatio === 'portrait' ? 'max-w-[200px] mx-auto' : ''
+              }`}
+              style={{
+                aspectRatio: thumbnail.aspectRatio === 'portrait' ? '9/16' : '16/9',
+              }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={thumbnail.imageUrl}
